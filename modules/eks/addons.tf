@@ -9,6 +9,16 @@ resource "aws_eks_addon" "vpc_cni" {
 
   resolve_conflicts_on_update = "OVERWRITE"
 
+  # Enables custom networking so pods pull IPs from var.pod_subnet_ids
+  # (the secondary CIDR) instead of the primary VPC CIDR, and tells the
+  # CNI to key off each node's AZ label when picking an ENIConfig.
+  configuration_values = jsonencode({
+    env = {
+      AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG = "true"
+      ENI_CONFIG_LABEL_DEF               = "topology.kubernetes.io/zone"
+    }
+  })
+
   tags = var.tags
 
   depends_on = [aws_eks_node_group.primary]
